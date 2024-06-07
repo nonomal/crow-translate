@@ -75,8 +75,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install extra-cmake-modules libqt5x11extras5-dev qttools5-dev qtmultimedia5-dev libkf5wayland-dev libtesseract-dev ninja-build
 
+      # To set the application icon
+      - name: Install icoutils
+        if: runner.os == 'Windows'
+        run: |
+          $version = "0.32.3"
+          Invoke-WebRequest -Uri "https://sourceforge.net/projects/unix-utils/files/icoutils/icoutils-$version-x86_64.zip" -OutFile icoutils.zip -UserAgent "NativeHost" -SkipCertificateCheck
+          7z x icoutils.zip
+          echo "${{ github.workspace }}/icoutils-$version-x86_64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Install vcpkg
-        uses: lukka/run-vcpkg@v11.4
+        uses: lukka/run-vcpkg@v11.5
         if: runner.os == 'Windows'
         with:
           vcpkgJsonGlob: vcpkg.json
@@ -84,11 +93,6 @@ jobs:
       - name: Setup MSVC
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
-
-      # See https://gitlab.kitware.com/cmake/cmake/-/merge_requests/4766#note_1091927
-      - name: Downgrade CMake
-        if: runner.os == 'Windows'
-        uses: lukka/get-cmake@v3.21.2
 
       - name: Build
         run: |
