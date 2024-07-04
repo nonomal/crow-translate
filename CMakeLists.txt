@@ -98,17 +98,24 @@ endif()
 
 set(APP_ICONS
     data/icons/app/128-apps-crow-translate.png
-    data/icons/app/150-apps-crow-translate.png
     data/icons/app/16-apps-crow-translate.png
     data/icons/app/22-apps-crow-translate.png
     data/icons/app/256-apps-crow-translate.png
-    data/icons/app/310-apps-crow-translate.png
     data/icons/app/32-apps-crow-translate.png
-    data/icons/app/44-apps-crow-translate.png
     data/icons/app/48-apps-crow-translate.png
     data/icons/app/512-apps-crow-translate.png
     data/icons/app/64-apps-crow-translate.png
 )
+
+if(WIN32)
+    # Those sizes needed only for Windows, for details see:
+    # https://learn.microsoft.com/en-us/microsoft-edge/progressive-web-apps-chromium/how-to/icon-theme-color
+    list(APPEND APP_ICONS
+        data/icons/app/44-apps-crow-translate.png
+        data/icons/app/150-apps-crow-translate.png
+        data/icons/app/310-apps-crow-translate.png
+    )
+endif()
 
 qt5_add_translation(QM_FILES
     data/translations/${PROJECT_NAME}_ar_SA.ts
@@ -254,9 +261,22 @@ if(WITH_PORTABLE_MODE)
 endif()
 
 if(UNIX AND NOT APPLE)
+    # -DQT_BIN_DIR=/path/to/qt/executables can be passed to CMake directly
+    if(NOT DEFINED QT_BIN_DIR)
+        if(ECM_VERSION VERSION_LESS 5.93)
+            include(ECMQueryQmake)
+            query_qmake(QT_BIN_DIR QT_INSTALL_BINS)
+        else()
+            include(ECMQueryQt)
+            ecm_query_qt(QT_BIN_DIR QT_INSTALL_BINS)
+        endif()
+    endif()
+
+    configure_file(data/${DESKTOP_FILE}.in ${CMAKE_CURRENT_BINARY_DIR}/data/${DESKTOP_FILE} @ONLY)
+
     install(TARGETS ${PROJECT_NAME})
     install(FILES ${QM_FILES} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/${PROJECT_NAME}/translations)
-    install(FILES data/${DESKTOP_FILE} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/data/${DESKTOP_FILE} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
     install(FILES data/${METAINFO_FILE} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo)
 
     ecm_install_icons(ICONS
